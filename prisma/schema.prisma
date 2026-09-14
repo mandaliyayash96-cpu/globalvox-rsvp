@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CampaignStatus {
+  draft
+  running
+  completed
+}
+
+enum InviteeStatus {
+  pending
+  calling
+  confirmed
+  declined
+  undecided
+  failed
+}
+
+model Campaign {
+  id            String         @id @default(cuid())
+  name          String
+  eventName     String
+  eventDate     DateTime
+  eventLocation String
+  objective     String
+  status        CampaignStatus @default(draft)
+  createdAt     DateTime       @default(now())
+
+  invitees Invitee[]
+}
+
+model Invitee {
+  id           String        @id @default(cuid())
+  campaignId   String
+  campaign     Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String
+  email        String
+  status       InviteeStatus @default(pending)
+  attempts     Int           @default(0)
+  lastError    String?
+  lastCalledAt DateTime?
+  notes        String?
+  createdAt    DateTime      @default(now())
+
+  // Dedupe: one phone number per campaign.
+  @@unique([campaignId, phone])
+  // Worker + stats + filtered listing all hit (campaignId, status).
+  @@index([campaignId, status])
+}

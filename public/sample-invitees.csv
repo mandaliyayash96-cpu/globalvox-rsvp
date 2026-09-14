@@ -1,0 +1,31 @@
+id,name,phone,email
+1,Arjun Patel,+919876500001,arjun.patel@example.com
+2,Neha Gupta,+919876500002,neha.gupta@example.com
+3,Rahul Verma,+919876500003,rahul.verma@example.com
+4,Sneha Joshi,+919876500004,sneha.joshi@example.com
+5,Karan Singh,+919876500005,karan.singh@example.com
+6,Pooja Rao,+919876500006,pooja.rao@example.com
+7,Amit Kulkarni,+919876500007,amit.kulkarni@example.com
+8,Riya Chatterjee,+919876500008,riya.c@example.com
+9,Siddharth Menon,+919876500009,sid.menon@example.com
+10,Tanvi Shah,+919876500010,tanvi.shah@example.com
+11,  Manish Agarwal  ,  +91 98765 00011  ,  Manish.Agarwal@Example.com
+12,Lakshmi Pillai,+919876500012,lakshmi.pillai@example.com
+13,Varun Bhatt,+919876500013,varun.bhatt@example.com
+14,Nikita Saxena,+919876500014,nikita.saxena@example.com
+15,Harsh Trivedi,+919876500015,harsh.trivedi@example.com
+16,,+919876500016,missing.name@example.com
+17,Deepak Mishra,98765,deepak.mishra@example.com
+18,Shreya Ghosh,+919876500018,not-an-email
+19,Arjun Patel,+919876500001,arjun.duplicate@example.com
+20,Farhan Khan,not-a-phone,farhan.khan@example.com
+21,Gauri Deshpande,+919876500021,gauri.d@example.com
+22,Aditya Nambiar,+919876500022,aditya.n@example.com
+23,Kavya Krishnan,+919876500023,kavya.k@example.com
+24,Rohit Yadav,+919876500024,rohit.yadav@example.com
+25,Simran Kaur,+919876500025,simran.kaur@example.com
+26,Yash Pandey,+919876500026,yash.pandey@example.com
+27,Ira Banerjee,+919876500027,ira.banerjee@example.com
+28,Dev Chauhan,+919876500028,dev.chauhan@example.com
+29,Anjali Sinha,+919876500029,anjali.sinha@example.com
+30,Nakul Jain,+919876500030,nakul.jain@example.com
