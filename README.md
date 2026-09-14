@@ -199,35 +199,39 @@ Terminal states: `confirmed`, `declined`, `undecided`, and `failed` with 3 attem
 
 ## 7. AI Usage
 
-- **Tools:** Claude Code (Anthropic Opus 5) in the terminal, used as a pair programmer for the whole
-  build: scaffolding the Next.js/Prisma project, writing the route handlers and components, the
-  streaming CSV importer, this README, and running `tsc` / `next build` / the CSV smoke test.
+- **Tools:** Claude (via Claude Code in the terminal) as a coding assistant, and Claude
+  in chat for planning, deployment guidance, and reviewing decisions.
+
+- **What I used it for:** I directed the build — I chose the stack (Next.js + Prisma +
+  Neon on Vercel), decided to keep the caller simulated per the brief and isolate it
+  behind one interface, and made the product/scale trade-offs documented above. The AI
+  accelerated the implementation: scaffolding, route handlers, the streaming CSV
+  importer, and a first draft of this README. I reviewed every file, ran the build and
+  tests myself, and drove deployment and debugging.
+
 - **One genuinely useful contribution:** the concurrency-safe claim in
-  `src/lib/campaignWorker.ts`. The brief suggested `updateMany` with a where-guard; the AI pointed
-  out that `updateMany` only returns a count (so a second concurrent worker cannot know which rows
-  it actually won) and proposed the single `UPDATE ... FOR UPDATE SKIP LOCKED ... RETURNING`
-  statement, plus stamping `lastCalledAt` at claim time so orphaned `calling` rows self-heal
-  without adding a column to the prescribed schema.
-- **Output that was verified / modified / rejected:**
-  - The papaparse pause/resume-with-async-batches pattern is easy to get subtly wrong (calling
-    `complete` before the last batch is flushed, or `resume()` before the streamer has halted).
-    Rather than trust it, the importer was split into a DB-free `parseInviteeCsv` and exercised
-    with `scripts/csv-import.test.ts` (sample file + 10k generated rows through a real Node stream).
-    It passed, with batches of exactly 500 and correct spreadsheet row numbers.
-  - The whole API was exercised end-to-end against a local Postgres 16 container before hand-off:
-    `prisma migrate deploy` + `prisma migrate diff` (hand-written migration == schema, no drift),
-    seed idempotency, validation/404/409 paths, a 145-invitee campaign driven to completion, and
-    **three concurrent `/process` calls** that claimed 75 *distinct* rows (every dialled row had
-    exactly `attempts = 1`, none left in `calling`), plus the stale-`calling` recovery rule.
-  - The AI first put the `notFound()` checks in the page components. Curl showed those URLs
-    returned **200** with not-found UI, because a root `loading.tsx` streams the shell before the
-    page runs. Rejected; restructured with route groups (`(home)`, `(dashboard)`) so each loading
-    boundary scopes only its own page and the existence check lives in a segment `layout.tsx`.
-    Re-verified: unknown campaign/invitee URLs now return a real 404.
-  - A first draft exported a `PAGE_SIZE` constant from a route file; `next build` rejects
-    non-handler exports from route modules, so it was moved to `lib/types.ts`.
-  - A first draft of the process route typed the returned status too narrowly after the
-    `status !== "running"` guard (TypeScript narrowed it to `"running"`); caught by `tsc` and fixed.
-  - The "progress = contacted/total" wording in the brief was deliberately interpreted as
-    *processed/total* (terminal rows), so the bar reaches 100% even when some invitees end as
-    `failed`; "Contacted" is shown separately. This is a product judgement call, documented here.
+  `src/lib/campaignWorker.ts`. My initial approach was `updateMany` with a where-guard;
+  the AI pointed out `updateMany` only returns a count, so a second concurrent worker
+  can't know which rows it won. We moved to a single
+  `UPDATE ... FOR UPDATE SKIP LOCKED ... RETURNING` statement, stamping `lastCalledAt`
+  at claim time so orphaned `calling` rows self-heal without adding a column. I verified
+  this with three concurrent `/process` calls claiming 75 distinct rows, none double-dialled.
+
+- **Where I verified / modified / rejected AI output:**
+  - **404s returned 200.** The AI first placed `notFound()` in page components; testing
+    the deployed URLs showed they returned 200 with not-found UI, because a root
+    `loading.tsx` streamed the shell first. I rejected that structure and it was
+    reworked with route groups so the existence check lives in a segment `layout.tsx`.
+    Re-tested: unknown URLs now return a real 404.
+  - **Deployment failure I debugged myself.** The first Vercel build failed with Prisma
+    `P1012` — `DATABASE_URL` wasn't a valid connection string. I traced it to the env
+    var holding a placeholder value, corrected it to the direct Neon URL, and redeployed
+    successfully. (Documented because it's a real part of how this shipped.)
+  - **CSV importer.** The papaparse pause/resume-with-async-batches pattern is easy to
+    get subtly wrong, so I didn't trust it — it was split into a DB-free parser and
+    exercised with a 10k-row test (batches of exactly 500, correct spreadsheet row numbers).
+  - Minor build/type fixes caught by `tsc` / `next build`: a non-handler export moved out
+    of a route module, and an over-narrowed return type in the process route.
+
+- **Ownership:** I'm responsible for the final solution. I can explain every architectural
+  decision, the concurrency model, the failure/retry handling, and the scale trade-offs.
